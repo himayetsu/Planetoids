@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>regl Cave (seeded)</title>
+  <title>Planetoids</title>
   <style>
     html,body,canvas{margin:0;height:100%;width:100%;display:block;background:#000}
 
@@ -16,8 +16,8 @@
       background: rgba(0,0,0,0.9);
       color: white;
       padding: 20px;
-      font-family: monospace;
-      font-size: 12px;
+      font-family: Verdana;
+      font-size: 14px;
       z-index: 1000;
       transition: left 0.3s ease;
       overflow-y: auto;
@@ -82,35 +82,102 @@
     #settingsPanel input[type="range"] {
       width: 100%;
       margin: 5px 0;
+      height: 6px;
+      background: #333;
+      border-radius: 3px;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    
+    #settingsPanel input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      background: #888;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    
+    #settingsPanel input[type="range"]::-webkit-slider-thumb:hover {
+      background: #aaa;
+    }
+    
+    #settingsPanel input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      background: #888;
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s ease;
+    }
+    
+    #settingsPanel input[type="range"]::-moz-range-thumb:hover {
+      background: #aaa;
     }
     
     #settingsPanel input[type="number"] {
       width: 80px;
-      background: #333;
+      background: #2a2a2a;
       color: white;
-      border: 1px solid #666;
-      padding: 5px;
-      border-radius: 3px;
+      border: 2px solid #444;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+    
+    #settingsPanel input[type="number"]:focus {
+      border-color: #888;
+      background: #333;
+      box-shadow: 0 0 0 2px rgba(136, 136, 136, 0.2);
+    }
+    
+    #settingsPanel input[type="number"]:hover {
+      border-color: #666;
     }
     
     #settingsPanel button {
-      background: #333;
+      background: linear-gradient(135deg, #444, #333);
       color: white;
-      border: 1px solid #666;
-      padding: 8px 15px;
+      border: 2px solid #555;
+      padding: 10px 16px;
       margin: 5px 5px 5px 0;
       cursor: pointer;
-      border-radius: 3px;
-      transition: background 0.2s ease;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: Verdana;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      outline: none;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    #settingsPanel .button-container {
+      display: flex;
+      justify-content: center;
+      margin: 15px
     }
     
     #settingsPanel button:hover {
-      background: #555;
+      background: linear-gradient(135deg, #555, #444);
+      border-color: #777;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+    
+    #settingsPanel button:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     
     #settingsPanel .controls-info {
       margin-top: 20px;
-      font-size: 10px;
+      font-size: 14px;
       color: #888;
       line-height: 1.4;
     }
@@ -129,8 +196,10 @@
   <label>View Distance: <span id="viewDistValue">100</span></label>
   <input type="range" id="viewDist" min="5" max="500" value="100">
   
-  <button onclick="randomSeed()">Random Seed</button>
-  <button onclick="resetParams()">Reset View</button>
+  <div class="button-container">
+    <button onclick="randomSeed()">Random Seed</button>
+    <button onclick="resetParams()">Reset View</button>
+  </div>
   
   <div class="controls-info">
     <strong>Controls:</strong><br>
