@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>regl Cave (seeded)</title>
+  <style>
+    html,body,canvas{margin:0;height:100%;width:100%;display:block;background:#000}
+
+    #settingsPanel {
+      position: fixed;
+      top: 0;
+      left: -400px;
+      width: 300px;
+      height: 100vh;
+      background: rgba(0,0,0,0.9);
+      color: white;
+      padding: 20px;
+      font-family: monospace;
+      font-size: 12px;
+      z-index: 1000;
+      transition: left 0.3s ease;
+      overflow-y: auto;
+      border-right: 2px solid #333;
+    }
+    
+    #settingsPanel.open {
+      left: 0;
+    }
+    
+    /* Settings Icon */
+    #settingsIcon {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 50px;
+      height: 50px;
+      background: rgba(0,0,0,0.95);
+      border: 3px solid #888;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 1001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 25px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.7);
+      color: white;
+    }
+    
+    #settingsIcon .gear-icon {
+      transform: translateY(-1px);
+    }
+    
+    #settingsIcon:hover {
+      background: rgba(0,0,0,0.9);
+      border-color: #888;
+      transform: scale(1.1);
+    }
+    
+    #settingsIcon.open {
+      left: 320px;
+      background: rgba(0,0,0,0.9);
+      border-color: #888;
+    }
+    
+    /* Settings Content */
+    #settingsPanel h3 {
+      margin: 0 0 20px 0;
+      color: #fff;
+      border-bottom: 1px solid #333;
+      padding-bottom: 10px;
+    }
+    
+    #settingsPanel label {
+      display: block;
+      margin: 15px 0 5px 0;
+      color: #ccc;
+    }
+    
+    #settingsPanel input[type="range"] {
+      width: 100%;
+      margin: 5px 0;
+    }
+    
+    #settingsPanel input[type="number"] {
+      width: 80px;
+      background: #333;
+      color: white;
+      border: 1px solid #666;
+      padding: 5px;
+      border-radius: 3px;
+    }
+    
+    #settingsPanel button {
+      background: #333;
+      color: white;
+      border: 1px solid #666;
+      padding: 8px 15px;
+      margin: 5px 5px 5px 0;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: background 0.2s ease;
+    }
+    
+    #settingsPanel button:hover {
+      background: #555;
+    }
+    
+    #settingsPanel .controls-info {
+      margin-top: 20px;
+      font-size: 10px;
+      color: #888;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="settingsIcon" onclick="toggleSettings()"><span class="gear-icon">⚙</span></div>
+
+<div id="settingsPanel">
+  <h3>Planetoids</h3>
+  
+  <label>Seed: <input type="number" id="seed" min="1" max="9999" value="0"></label>
+  
+  <label>View Distance: <span id="viewDistValue">100</span></label>
+  <input type="range" id="viewDist" min="5" max="500" value="100">
+  
+  <button onclick="randomSeed()">Random Seed</button>
+  <button onclick="resetParams()">Reset View</button>
+  
+  <div class="controls-info">
+    <strong>Controls:</strong><br>
+    - WASD: Move around<br>
+    - Q/E: Up/Down<br>
+    - Click drag: Look around<br>
+    - Space: Random seed<br>
+  </div>
+</div>
+<script src="https://unpkg.com/regl/dist/regl.min.js"></script>
+<script src="generator.js"></script>
+<script>
+// settings panel toggle
+function toggleSettings() {
+  const panel = document.getElementById('settingsPanel');
+  const icon = document.getElementById('settingsIcon');
+  
+  panel.classList.toggle('open');
+  icon.classList.toggle('open');
+}
+
+// close settings when clicking outside
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('settingsPanel');
+  const icon = document.getElementById('settingsIcon');
+  
+  if (panel.classList.contains('open') && 
+      !panel.contains(e.target) && 
+      !icon.contains(e.target)) {
+    panel.classList.remove('open');
+    icon.classList.remove('open');
+  }
+});
+
+// control functions
+function randomSeed() {
+  params.seed = Math.floor(Math.random() * 1000) + 1;
+  document.getElementById('seed').value = params.seed;
+}
+
+function resetParams() {
+  params.seed = 0;
+  document.getElementById('seed').value = params.seed;
+  
+  // reset cam
+  cameraX = 0;
+  cameraY = 0;
+  cameraZ = -8;
+  cameraAngle = 0;
+  cameraPitch = 0;
+}
+
+// Camera system
+let cameraAngle = 0;
+let cameraPitch = 0;
+let cameraX = 0;
+let cameraZ = -8;
+let cameraY = 0;
+let moveSpeed = 0.1;
+
+
+document.getElementById('viewDist').value = 100;
+document.getElementById('viewDistValue').textContent = '100';
+
+// for some reason the renderer loads 50 default even after setting default to 100
+// so we first load then immediately set distance to 100
+window.addEventListener('load', () => {
+      console.log('params found, current maxDist:', params.maxDist);
+      params.maxDist = 100;
+      
+      params.stepSize = params.maxDist / 1000;
+      params.maxSteps = Math.min(512, Math.max(64, Math.floor(params.maxDist * 2)));
+
+});
+
+// Add event listeners for controls
+document.getElementById('seed').addEventListener('input', (e) => {
+  params.seed = parseInt(e.target.value);
+});
+
+document.getElementById('viewDist').addEventListener('input', (e) => {
+  params.maxDist = parseFloat(e.target.value);
+  // adjust step size based on view distance for better quality
+  params.stepSize = params.maxDist / 1000; 
+  params.maxSteps = Math.min(512, Math.max(64, Math.floor(params.maxDist * 2))); 
+  
+  document.getElementById('viewDistValue').textContent = params.maxDist.toFixed(0);
+  console.log('View distance changed to:', params.maxDist, 'stepSize:', params.stepSize, 'maxSteps:', params.maxSteps);
+});
+
+// Mouse controls for camera
+let isMouseDown = false;
+let lastMouseX = 0;
+let lastMouseY = 0;
+
+canvas.addEventListener('mousedown', (e) => {
+  isMouseDown = true;
+  lastMouseX = e.clientX;
+  lastMouseY = e.clientY;
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  if (isMouseDown) {
+    const deltaX = e.clientX - lastMouseX;
+    const deltaY = e.clientY - lastMouseY;
+    
+    // Natural controls
+    cameraAngle += deltaX * 0.01; // Natural horizontal
+    cameraPitch -= deltaY * 0.01; // Inverted vertical (mouse up = look up)
+    cameraPitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, cameraPitch)); // Clamp pitch
+    
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  }
+});
+
+canvas.addEventListener('mouseup', () => {
+  isMouseDown = false;
+});
+
+canvas.addEventListener('mouseleave', () => {
+  isMouseDown = false;
+});
+
+// WASD movement controls
+const keys = {};
+document.addEventListener('keydown', (e) => {
+  keys[e.key.toLowerCase()] = true;
+  
+  if (e.key === ' ') {
+    e.preventDefault();
+    randomSeed();
+  }
+});
+
+document.addEventListener('keyup', (e) => {
+  keys[e.key.toLowerCase()] = false;
+});
+
+// Update camera position based on WASD keys
+function updateCamera() {
+  const forwardX = Math.sin(cameraAngle);
+  const forwardZ = Math.cos(cameraAngle);
+  const rightX = Math.sin(cameraAngle + Math.PI/2);
+  const rightZ = Math.cos(cameraAngle + Math.PI/2);
+  
+  let currentMoveSpeed = moveSpeed;
+  if (keys['shift']) {
+    currentMoveSpeed *= 3;
+  }
+  if (keys['w']) {
+    cameraX += forwardX * currentMoveSpeed;
+    cameraZ += forwardZ * currentMoveSpeed;
+  }
+  if (keys['s']) {
+    cameraX -= forwardX * currentMoveSpeed;
+    cameraZ -= forwardZ * currentMoveSpeed;
+  }
+  if (keys['a']) {
+    cameraX -= rightX * currentMoveSpeed;
+    cameraZ -= rightZ * currentMoveSpeed;
+  }
+  if (keys['d']) {
+    cameraX += rightX * currentMoveSpeed;
+    cameraZ += rightZ * currentMoveSpeed;
+  }
+  if (keys['q']) {
+    cameraY -= currentMoveSpeed;
+  }
+  if (keys['e']) {
+    cameraY += currentMoveSpeed;
+  }
+}
+
+// dev helpers in console:
+window.__cave = params; // tweak live: __cave.seed=999; __cave.threshold=0.1;
+</script>
+</body>
+</html>
