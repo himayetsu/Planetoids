@@ -5,377 +5,174 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Planetoids</title>
   <style>
-    html,body,canvas{margin:0;height:100%;width:100%;display:block;background:#000}
+    html, body, canvas {
+      margin: 0; height: 100%; width: 100%;
+      display: block; background: #000; overflow: hidden;
+    }
 
-    #settingsPanel {
-      position: fixed;
-      top: 0;
-      left: -400px;
-      width: 300px;
-      height: 100vh;
-      background: rgba(0,0,0,0.9);
-      color: white;
-      padding: 20px;
-      font-family: Verdana;
-      font-size: 14px;
-      z-index: 1000;
-      transition: left 0.3s ease;
-      overflow-y: auto;
-      border-right: 2px solid #333;
-    }
-    
-    #settingsPanel.open {
-      left: 0;
-    }
-    
-    /* Settings Icon */
+    /* ─── Settings icon ─── */
     #settingsIcon {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      width: 50px;
-      height: 50px;
-      background: rgba(0,0,0,0.95);
-      border: 3px solid #888;
-      border-radius: 50%;
-      cursor: pointer;
-      z-index: 1001;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 25px;
+      position: fixed; top: 20px; left: 20px;
+      width: 50px; height: 50px;
+      background: rgba(0,0,0,0.95); border: 3px solid #888;
+      border-radius: 50%; cursor: pointer; z-index: 1001;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 25px; color: white;
       transition: all 0.3s ease;
       box-shadow: 0 4px 15px rgba(0,0,0,0.7);
-      color: white;
     }
-    
-    #settingsIcon .gear-icon {
-      transform: translateY(-1px);
+    #settingsIcon .gear-icon { transform: translateY(-1px); }
+    #settingsIcon:hover { background: rgba(0,0,0,0.9); border-color: #aaa; transform: scale(1.1); }
+    #settingsIcon.open { left: 320px; background: rgba(0,0,0,0.9); border-color: #888; }
+
+    /* ─── Settings panel ─── */
+    #settingsPanel {
+      position: fixed; top: 0; left: -400px;
+      width: 300px; height: 100vh;
+      background: rgba(0,0,0,0.92); color: white;
+      padding: 20px; font-family: Verdana; font-size: 14px;
+      z-index: 1000; transition: left 0.3s ease;
+      overflow-y: auto; border-right: 2px solid #333;
     }
-    
-    #settingsIcon:hover {
-      background: rgba(0,0,0,0.9);
-      border-color: #888;
-      transform: scale(1.1);
-    }
-    
-    #settingsIcon.open {
-      left: 320px;
-      background: rgba(0,0,0,0.9);
-      border-color: #888;
-    }
-    
-    /* Settings Content */
-    #settingsPanel h3 {
-      margin: 0 0 20px 0;
-      color: #fff;
-      border-bottom: 1px solid #333;
-      padding-bottom: 10px;
-    }
-    
-    #settingsPanel label {
-      display: block;
-      margin: 15px 0 5px 0;
-      color: #ccc;
-    }
-    
+    #settingsPanel.open { left: 0; }
+    #settingsPanel h3 { margin: 0 0 20px; color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px; }
+    #settingsPanel label { display: block; margin: 15px 0 5px; color: #ccc; }
     #settingsPanel input[type="range"] {
-      width: 100%;
-      margin: 5px 0;
-      height: 6px;
-      background: #333;
-      border-radius: 3px;
-      outline: none;
-      -webkit-appearance: none;
+      width: 100%; margin: 5px 0; height: 6px;
+      background: #333; border-radius: 3px; outline: none; -webkit-appearance: none;
     }
-    
     #settingsPanel input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 18px;
-      height: 18px;
-      background: #888;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: background 0.2s ease;
+      -webkit-appearance: none; width: 18px; height: 18px;
+      background: #888; border-radius: 50%; cursor: pointer;
     }
-    
-    #settingsPanel input[type="range"]::-webkit-slider-thumb:hover {
-      background: #aaa;
-    }
-    
     #settingsPanel input[type="range"]::-moz-range-thumb {
-      width: 18px;
-      height: 18px;
-      background: #888;
-      border-radius: 50%;
-      cursor: pointer;
-      border: none;
-      transition: background 0.2s ease;
+      width: 18px; height: 18px; background: #888;
+      border-radius: 50%; cursor: pointer; border: none;
     }
-    
-    #settingsPanel input[type="range"]::-moz-range-thumb:hover {
-      background: #aaa;
-    }
-    
-    #settingsPanel input[type="number"] {
-      width: 80px;
-      background: #2a2a2a;
-      color: white;
-      border: 2px solid #444;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-family: inherit;
-      transition: all 0.2s ease;
-      outline: none;
-    }
-    
-    #settingsPanel input[type="number"]:focus {
-      border-color: #888;
-      background: #333;
-      box-shadow: 0 0 0 2px rgba(136, 136, 136, 0.2);
-    }
-    
-    #settingsPanel input[type="number"]:hover {
-      border-color: #666;
-    }
-    
-    #settingsPanel button {
-      background: linear-gradient(135deg, #444, #333);
-      color: white;
-      border: 2px solid #555;
-      padding: 10px 16px;
-      margin: 5px 5px 5px 0;
-      cursor: pointer;
-      border-radius: 6px;
-      font-size: 12px;
-      font-family: Verdana;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      outline: none;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-    
-    #settingsPanel .button-container {
-      display: flex;
-      justify-content: center;
-      margin: 15px
-    }
-    
-    #settingsPanel button:hover {
-      background: linear-gradient(135deg, #555, #444);
-      border-color: #777;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-    }
-    
-    #settingsPanel button:active {
-      transform: translateY(0);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-    
     #settingsPanel .controls-info {
-      margin-top: 20px;
-      font-size: 14px;
-      color: #888;
-      line-height: 1.4;
+      margin-top: 20px; font-size: 13px; color: #888; line-height: 1.5;
+    }
+
+    /* ─── Live score (right of settings icon) ─── */
+    #liveScore {
+      position: fixed; top: 26px; left: 85px;
+      display: none; z-index: 100;
+      font-family: 'Courier New', monospace; font-size: 20px; color: #fff;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.9);
+      pointer-events: none; white-space: nowrap;
+    }
+    #liveScore .label { color: #888; font-size: 14px; margin-right: 4px; }
+
+    /* ─── Crosshair ─── */
+    #crosshair {
+      position: fixed; display: none; pointer-events: none; z-index: 200;
+      width: 22px; height: 22px; transform: translate(-50%, -50%);
+    }
+    #crosshair::before, #crosshair::after {
+      content: ''; position: absolute; background: rgba(0,255,160,0.45);
+    }
+    #crosshair::before { width: 1px; height: 100%; left: 50%; transform: translateX(-50%); }
+    #crosshair::after  { height: 1px; width: 100%; top: 50%; transform: translateY(-50%); }
+
+    /* ─── Death flash ─── */
+    #deathFlash {
+      position: fixed; inset: 0;
+      background: rgba(255,60,30,0.5); opacity: 0;
+      transition: opacity 0.25s; pointer-events: none; z-index: 400;
+    }
+
+    /* ─── Overlay screens (start / game-over) ─── */
+    .overlay-screen {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 500; color: #fff;
+      font-family: 'Courier New', monospace;
+      background: rgba(0,0,0,0.55);
+    }
+    .overlay-screen h1 {
+      font-size: 64px; letter-spacing: 10px; margin: 0 0 12px;
+      text-shadow: 0 0 30px rgba(255,255,255,0.15);
+    }
+    .overlay-screen .subtitle {
+      font-size: 15px; color: #999; margin-bottom: 36px; letter-spacing: 2px;
+    }
+    .overlay-screen .score-line {
+      font-size: 26px; margin: 6px 0; letter-spacing: 2px;
+    }
+    .overlay-screen .high-score {
+      font-size: 16px; color: #888; margin-bottom: 36px;
+    }
+    .overlay-screen .game-btn {
+      padding: 14px 56px; font-size: 18px;
+      font-family: 'Courier New', monospace; letter-spacing: 5px;
+      background: transparent; border: 2px solid rgba(255,255,255,0.6);
+      color: #fff; cursor: pointer; transition: all 0.3s;
+    }
+    .overlay-screen .game-btn:hover {
+      background: rgba(255,255,255,0.08); border-color: #fff; transform: scale(1.05);
+    }
+    .overlay-screen .hint {
+      margin-top: 18px; font-size: 12px; color: #555; letter-spacing: 1px;
+    }
+
+    #gameOverScreen { display: none; }
+    #gameOverScreen .score-line { color: #ff6644; }
+
+    /* ─── Seed tag (tiny, bottom-left) ─── */
+    #seedTag {
+      position: fixed; bottom: 12px; left: 14px;
+      font-family: 'Courier New', monospace; font-size: 11px;
+      color: #444; z-index: 100; pointer-events: none;
     }
   </style>
 </head>
 <body>
+
 <canvas id="c"></canvas>
 
+<!-- HUD -->
 <div id="settingsIcon" onclick="toggleSettings()"><span class="gear-icon">⚙</span></div>
 
 <div id="settingsPanel">
-  <h3>Planetoids</h3>
-  
-  <label>Seed: <input type="number" id="seed" min="1" max="9999" value="0"></label>
-  
-  <label>View Distance: <span id="viewDistValue">100</span></label>
-  <input type="range" id="viewDist" min="5" max="500" value="100">
-  
-  <div class="button-container">
-    <button onclick="randomSeed()">Random Seed</button>
-    <button onclick="resetParams()">Reset View</button>
-  </div>
-  
+  <h3>Settings</h3>
+  <label>View Distance: <span id="viewDistValue">80</span></label>
+  <input type="range" id="viewDist" min="20" max="200" value="80">
   <div class="controls-info">
-    <strong>Controls:</strong><br>
-    - WASD: Move around<br>
-    - Q/E: Up/Down<br>
-    - Click drag: Look around<br>
-    - Space: Random seed<br>
+    <strong>Controls</strong><br>
+    Mouse — aim direction<br>
+    W / ↑ — accelerate<br>
+    S / ↓ — brake<br>
+    C — toggle first-person view<br>
+    Space — start / restart
   </div>
 </div>
+
+<div id="liveScore"><span class="label">DIST</span> <span id="scoreValue">0 m</span></div>
+<div id="crosshair"></div>
+<div id="deathFlash"></div>
+<div id="seedTag">SEED <span id="seedDisplay">—</span></div>
+
+<!-- Start screen -->
+<div id="startScreen" class="overlay-screen">
+  <h1>PLANETOIDS</h1>
+  <p class="subtitle">navigate the asteroid field</p>
+  <p class="high-score">HIGH SCORE: <span id="menuHighScore">0</span> m</p>
+  <button class="game-btn" onclick="startGame()">START</button>
+  <p class="hint">press SPACE to launch</p>
+</div>
+
+<!-- Game-over screen -->
+<div id="gameOverScreen" class="overlay-screen">
+  <h1>GAME OVER</h1>
+  <p class="score-line"><span id="finalScore">0</span> m</p>
+  <p class="high-score">BEST: <span id="goHighScore">0</span> m</p>
+  <button class="game-btn" onclick="startGame()">RESTART</button>
+  <p class="hint">press SPACE to relaunch</p>
+</div>
+
 <script src="https://unpkg.com/regl/dist/regl.min.js"></script>
 <script src="generator.js"></script>
-<script>
-// settings panel toggle
-function toggleSettings() {
-  const panel = document.getElementById('settingsPanel');
-  const icon = document.getElementById('settingsIcon');
-  
-  panel.classList.toggle('open');
-  icon.classList.toggle('open');
-}
-
-// close settings when clicking outside
-document.addEventListener('click', (e) => {
-  const panel = document.getElementById('settingsPanel');
-  const icon = document.getElementById('settingsIcon');
-  
-  if (panel.classList.contains('open') && 
-      !panel.contains(e.target) && 
-      !icon.contains(e.target)) {
-    panel.classList.remove('open');
-    icon.classList.remove('open');
-  }
-});
-
-// control functions
-function randomSeed() {
-  params.seed = Math.floor(Math.random() * 1000) + 1;
-  document.getElementById('seed').value = params.seed;
-}
-
-function resetParams() {
-  params.seed = 0;
-  document.getElementById('seed').value = params.seed;
-  
-  // reset cam
-  cameraX = 0;
-  cameraY = 0;
-  cameraZ = -8;
-  cameraAngle = 0;
-  cameraPitch = 0;
-}
-
-// Camera system
-let cameraAngle = 0;
-let cameraPitch = 0;
-let cameraX = 0;
-let cameraZ = -8;
-let cameraY = 0;
-let moveSpeed = 0.1;
-
-
-document.getElementById('viewDist').value = 100;
-document.getElementById('viewDistValue').textContent = '100';
-
-// for some reason the renderer loads 50 default even after setting default to 100
-// so we first load then immediately set distance to 100
-window.addEventListener('load', () => {
-      console.log('params found, current maxDist:', params.maxDist);
-      params.maxDist = 100;
-      
-      params.stepSize = params.maxDist / 1000;
-      params.maxSteps = Math.min(512, Math.max(64, Math.floor(params.maxDist * 2)));
-
-});
-
-// Add event listeners for controls
-document.getElementById('seed').addEventListener('input', (e) => {
-  params.seed = parseInt(e.target.value);
-});
-
-document.getElementById('viewDist').addEventListener('input', (e) => {
-  params.maxDist = parseFloat(e.target.value);
-  // adjust step size based on view distance for better quality
-  params.stepSize = params.maxDist / 1000; 
-  params.maxSteps = Math.min(512, Math.max(64, Math.floor(params.maxDist * 2))); 
-  
-  document.getElementById('viewDistValue').textContent = params.maxDist.toFixed(0);
-  console.log('View distance changed to:', params.maxDist, 'stepSize:', params.stepSize, 'maxSteps:', params.maxSteps);
-});
-
-// Mouse controls for camera
-let isMouseDown = false;
-let lastMouseX = 0;
-let lastMouseY = 0;
-
-canvas.addEventListener('mousedown', (e) => {
-  isMouseDown = true;
-  lastMouseX = e.clientX;
-  lastMouseY = e.clientY;
-});
-
-canvas.addEventListener('mousemove', (e) => {
-  if (isMouseDown) {
-    const deltaX = e.clientX - lastMouseX;
-    const deltaY = e.clientY - lastMouseY;
-    
-    // Natural controls
-    cameraAngle += deltaX * 0.01; // Natural horizontal
-    cameraPitch -= deltaY * 0.01; // Inverted vertical (mouse up = look up)
-    cameraPitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, cameraPitch)); // Clamp pitch
-    
-    lastMouseX = e.clientX;
-    lastMouseY = e.clientY;
-  }
-});
-
-canvas.addEventListener('mouseup', () => {
-  isMouseDown = false;
-});
-
-canvas.addEventListener('mouseleave', () => {
-  isMouseDown = false;
-});
-
-// WASD movement controls
-const keys = {};
-document.addEventListener('keydown', (e) => {
-  keys[e.key.toLowerCase()] = true;
-  
-  if (e.key === ' ') {
-    e.preventDefault();
-    randomSeed();
-  }
-});
-
-document.addEventListener('keyup', (e) => {
-  keys[e.key.toLowerCase()] = false;
-});
-
-// Update camera position based on WASD keys
-function updateCamera() {
-  const forwardX = Math.sin(cameraAngle);
-  const forwardZ = Math.cos(cameraAngle);
-  const rightX = Math.sin(cameraAngle + Math.PI/2);
-  const rightZ = Math.cos(cameraAngle + Math.PI/2);
-  
-  let currentMoveSpeed = moveSpeed;
-  if (keys['shift']) {
-    currentMoveSpeed *= 3;
-  }
-  if (keys['w']) {
-    cameraX += forwardX * currentMoveSpeed;
-    cameraZ += forwardZ * currentMoveSpeed;
-  }
-  if (keys['s']) {
-    cameraX -= forwardX * currentMoveSpeed;
-    cameraZ -= forwardZ * currentMoveSpeed;
-  }
-  if (keys['a']) {
-    cameraX -= rightX * currentMoveSpeed;
-    cameraZ -= rightZ * currentMoveSpeed;
-  }
-  if (keys['d']) {
-    cameraX += rightX * currentMoveSpeed;
-    cameraZ += rightZ * currentMoveSpeed;
-  }
-  if (keys['q']) {
-    cameraY -= currentMoveSpeed;
-  }
-  if (keys['e']) {
-    cameraY += currentMoveSpeed;
-  }
-}
-
-// dev helpers in console:
-window.__cave = params; // tweak live: __cave.seed=999; __cave.threshold=0.1;
-</script>
+<script src="game.js"></script>
 </body>
 </html>
