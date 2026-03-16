@@ -389,6 +389,15 @@ function updateShip(dt) {
   // --- move forward ---
   ship.pos = V3.add(ship.pos, V3.scale(ship.forward, ship.speed * dt));
 
+  // --- self-right: drift ship.up back toward world up to prevent permanent tilt ---
+  const worldUp = [0, 1, 0];
+  const upTarget = V3.sub(worldUp, V3.scale(ship.forward, V3.dot(worldUp, ship.forward)));
+  if (V3.len(upTarget) > 0.01) {
+    ship.up    = V3.normalize(V3.lerp(ship.up, V3.normalize(upTarget), 3.0 * dt));
+    ship.right = V3.normalize(V3.cross(ship.up, ship.forward));
+    ship.up    = V3.normalize(V3.cross(ship.forward, ship.right));
+  }
+
   // --- score ---
   score = V3.dist(ship.pos, startPos) * 10;
 }
